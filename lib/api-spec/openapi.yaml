@@ -1,0 +1,854 @@
+openapi: 3.1.0
+info:
+  title: Api
+  version: 0.1.0
+  description: Sanji's All Blue Restaurant API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: auth
+    description: Mobile number authentication
+  - name: menu
+    description: Menu items
+  - name: chefs
+    description: Restaurant chefs
+  - name: reviews
+    description: Customer reviews
+  - name: orders
+    description: Delivery orders
+  - name: dashboard
+    description: Dashboard aggregates
+  - name: admin
+    description: Admin-only operations
+
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /auth/register:
+    post:
+      operationId: registerPhone
+      tags: [auth]
+      summary: Register with mobile number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PhoneInput"
+      responses:
+        "201":
+          description: Registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResult"
+
+  /auth/login:
+    post:
+      operationId: loginPhone
+      tags: [auth]
+      summary: Login with mobile number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PhoneInput"
+      responses:
+        "200":
+          description: Logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResult"
+
+  /menu:
+    get:
+      operationId: listMenuItems
+      tags: [menu]
+      summary: List all menu items
+      parameters:
+        - name: origin
+          in: query
+          schema:
+            type: string
+            enum: [north_blue, south_blue, east_blue, west_blue]
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Menu items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MenuItem"
+    post:
+      operationId: createMenuItem
+      tags: [menu]
+      summary: Add menu item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MenuItemInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MenuItem"
+
+  /menu/{id}:
+    get:
+      operationId: getMenuItem
+      tags: [menu]
+      summary: Get a menu item
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Menu item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MenuItem"
+
+  /menu/featured:
+    get:
+      operationId: listFeaturedItems
+      tags: [menu]
+      summary: Get featured items (signature dishes)
+      responses:
+        "200":
+          description: Featured menu items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MenuItem"
+
+  /menu/categories:
+    get:
+      operationId: listCategories
+      tags: [menu]
+      summary: List unique categories
+      responses:
+        "200":
+          description: Category list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+
+  /chefs:
+    get:
+      operationId: listChefs
+      tags: [chefs]
+      summary: List all chefs
+      responses:
+        "200":
+          description: Chefs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Chef"
+
+  /chefs/{id}:
+    get:
+      operationId: getChef
+      tags: [chefs]
+      summary: Get a chef
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Chef
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Chef"
+
+  /reviews:
+    get:
+      operationId: listReviews
+      tags: [reviews]
+      summary: List all reviews
+      parameters:
+        - name: menuItemId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Reviews
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Review"
+    post:
+      operationId: createReview
+      tags: [reviews]
+      summary: Submit a review
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReviewInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Review"
+
+  /orders:
+    get:
+      operationId: listOrders
+      tags: [orders]
+      summary: List orders for current user
+      responses:
+        "200":
+          description: Orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Order"
+    post:
+      operationId: createOrder
+      tags: [orders]
+      summary: Place a delivery order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrderInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+
+  /orders/{id}:
+    get:
+      operationId: getOrder
+      tags: [orders]
+      summary: Get order by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Order
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+
+  /dashboard/stats:
+    get:
+      operationId: getDashboardStats
+      tags: [dashboard]
+      summary: Restaurant overview stats
+      responses:
+        "200":
+          description: Stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
+  /dashboard/popular:
+    get:
+      operationId: getPopularItems
+      tags: [dashboard]
+      summary: Top 5 most popular dishes
+      responses:
+        "200":
+          description: Popular items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MenuItem"
+
+  /admin/menu/{id}:
+    put:
+      operationId: adminUpdateMenuItem
+      tags: [admin]
+      summary: Update a menu item (admin only)
+      parameters:
+        - name: x-user-id
+          in: header
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MenuItemInput"
+      responses:
+        "200":
+          description: Updated menu item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MenuItem"
+        "403":
+          description: Forbidden
+        "404":
+          description: Not found
+    delete:
+      operationId: adminDeleteMenuItem
+      tags: [admin]
+      summary: Delete a menu item (admin only)
+      parameters:
+        - name: x-user-id
+          in: header
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+        "403":
+          description: Forbidden
+        "404":
+          description: Not found
+
+  /admin/orders:
+    get:
+      operationId: adminListOrders
+      tags: [admin]
+      summary: List all orders (admin only)
+      parameters:
+        - name: x-user-id
+          in: header
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: All orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Order"
+        "403":
+          description: Forbidden
+
+  /admin/orders/{id}:
+    patch:
+      operationId: adminUpdateOrder
+      tags: [admin]
+      summary: Update order status and admin note (admin only)
+      parameters:
+        - name: x-user-id
+          in: header
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminOrderUpdate"
+      responses:
+        "200":
+          description: Updated order
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "403":
+          description: Forbidden
+        "404":
+          description: Not found
+    delete:
+      operationId: adminDeleteOrder
+      tags: [admin]
+      summary: Delete an order (admin only)
+      parameters:
+        - name: x-user-id
+          in: header
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+        "403":
+          description: Forbidden
+        "404":
+          description: Not found
+
+  /admin/reviews:
+    get:
+      operationId: adminListReviews
+      tags: [admin]
+      summary: List all reviews (admin only)
+      parameters:
+        - name: x-user-id
+          in: header
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: All reviews
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Review"
+        "403":
+          description: Forbidden
+
+  /admin/reviews/{id}:
+    delete:
+      operationId: adminDeleteReview
+      tags: [admin]
+      summary: Delete a review (admin only)
+      parameters:
+        - name: x-user-id
+          in: header
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+        "403":
+          description: Forbidden
+        "404":
+          description: Not found
+
+  /admin/users:
+    get:
+      operationId: adminListUsers
+      tags: [admin]
+      summary: List all registered users (admin only)
+      parameters:
+        - name: x-user-id
+          in: header
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: All users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+        "403":
+          description: Forbidden
+
+  /admin/users/{id}:
+    put:
+      operationId: adminUpdateUser
+      tags: [admin]
+      summary: Update a user account (admin only)
+      parameters:
+        - name: x-user-id
+          in: header
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminUserInput"
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "403":
+          description: Forbidden
+        "404":
+          description: Not found
+    delete:
+      operationId: adminDeleteUser
+      tags: [admin]
+      summary: Delete a user account (admin only)
+      parameters:
+        - name: x-user-id
+          in: header
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+        "403":
+          description: Forbidden
+        "404":
+          description: Not found
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+
+    PhoneInput:
+      type: object
+      required: [phone]
+      properties:
+        phone:
+          type: string
+        name:
+          type: string
+
+    AuthResult:
+      type: object
+      required: [success, user]
+      properties:
+        success:
+          type: boolean
+        user:
+          $ref: "#/components/schemas/User"
+
+    User:
+      type: object
+      required: [id, phone, role]
+      properties:
+        id:
+          type: integer
+        phone:
+          type: string
+        name:
+          type: ["string", "null"]
+        role:
+          type: string
+          enum: [customer, admin]
+        createdAt:
+          type: string
+
+    MenuItem:
+      type: object
+      required: [id, name, price, origin, category]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: ["string", "null"]
+        price:
+          type: number
+        origin:
+          type: string
+          enum: [north_blue, south_blue, east_blue, west_blue]
+        category:
+          type: string
+        imageUrl:
+          type: ["string", "null"]
+        isAvailable:
+          type: boolean
+        isFeatured:
+          type: boolean
+        rating:
+          type: ["number", "null"]
+        reviewCount:
+          type: integer
+
+    MenuItemInput:
+      type: object
+      required: [name, price, origin, category]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+        origin:
+          type: string
+          enum: [north_blue, south_blue, east_blue, west_blue]
+        category:
+          type: string
+        imageUrl:
+          type: string
+        isAvailable:
+          type: boolean
+        isFeatured:
+          type: boolean
+
+    Chef:
+      type: object
+      required: [id, name, specialty]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        specialty:
+          type: string
+        bio:
+          type: ["string", "null"]
+        imageUrl:
+          type: ["string", "null"]
+        yearsExperience:
+          type: integer
+
+    Review:
+      type: object
+      required: [id, rating, comment, createdAt]
+      properties:
+        id:
+          type: integer
+        menuItemId:
+          type: ["integer", "null"]
+        userName:
+          type: string
+        rating:
+          type: integer
+        comment:
+          type: string
+        createdAt:
+          type: string
+
+    ReviewInput:
+      type: object
+      required: [rating, comment]
+      properties:
+        menuItemId:
+          type: integer
+        rating:
+          type: integer
+        comment:
+          type: string
+        userName:
+          type: string
+
+    OrderItem:
+      type: object
+      required: [menuItemId, quantity, price]
+      properties:
+        menuItemId:
+          type: integer
+        name:
+          type: string
+        quantity:
+          type: integer
+        price:
+          type: number
+
+    Order:
+      type: object
+      required: [id, reference, status, total, deliveryAddress, createdAt]
+      properties:
+        id:
+          type: integer
+        reference:
+          type: string
+        customerName:
+          type: ["string", "null"]
+        userId:
+          type: ["integer", "null"]
+        status:
+          type: string
+          enum: [pending, preparing, out_for_delivery, delivered, cancelled]
+        total:
+          type: number
+        deliveryAddress:
+          type: string
+        deliveryLat:
+          type: ["number", "null"]
+        deliveryLng:
+          type: ["number", "null"]
+        estimatedMinutes:
+          type: ["integer", "null"]
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrderItem"
+        adminNote:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    OrderInput:
+      type: object
+      required: [deliveryAddress, items]
+      properties:
+        userId:
+          type: integer
+        deliveryAddress:
+          type: string
+        deliveryLat:
+          type: number
+        deliveryLng:
+          type: number
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrderItem"
+
+    AdminOrderUpdate:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [pending, preparing, out_for_delivery, delivered, cancelled]
+        adminNote:
+          type: ["string", "null"]
+
+    AdminUserInput:
+      type: object
+      properties:
+        name:
+          type: ["string", "null"]
+        phone:
+          type: string
+        role:
+          type: string
+          enum: [customer, admin]
+
+    DashboardStats:
+      type: object
+      required: [totalMenuItems, totalChefs, totalReviews, averageRating, totalOrders]
+      properties:
+        totalMenuItems:
+          type: integer
+        totalChefs:
+          type: integer
+        totalReviews:
+          type: integer
+        averageRating:
+          type: number
+        totalOrders:
+          type: integer
+        originBreakdown:
+          type: object
+          additionalProperties:
+            type: integer

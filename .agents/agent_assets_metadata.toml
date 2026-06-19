@@ -1,0 +1,62 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "uMuF6DWsmt71OwAFqDFXN"
+uri = "file://artifacts/all-blue/src/assets/food-north-1.png"
+type = "image"
+title = "North Blue seafood stew"
+
+[[generated]]
+id = "Vk_UVEUMNL6PnyxZ7-YsQ"
+uri = "file://artifacts/all-blue/src/assets/food-north-2.png"
+type = "image"
+title = "North Blue fried fish"
+
+[[generated]]
+id = "bx6gtgsQ7STRkNsbePkJG"
+uri = "file://artifacts/all-blue/src/assets/food-south-1.png"
+type = "image"
+title = "South Blue fish salad"
+
+[[generated]]
+id = "NsxM-UzX2qTmoU4H1_yS1"
+uri = "file://artifacts/all-blue/src/assets/food-south-2.png"
+type = "image"
+title = "South Blue shrimp skewers"
+
+[[generated]]
+id = "fJnr9ZZXFhnV9RqOmtIKv"
+uri = "file://artifacts/all-blue/src/assets/food-east-1.png"
+type = "image"
+title = "East Blue fried rice"
+
+[[generated]]
+id = "KE4lskPAkitnYtAmL5aqq"
+uri = "file://artifacts/all-blue/src/assets/food-east-2.png"
+type = "image"
+title = "East Blue clam broth"
+
+[[generated]]
+id = "A9MzpPgUfSPJyIEBiuThF"
+uri = "file://artifacts/all-blue/src/assets/food-west-1.png"
+type = "image"
+title = "West Blue seafood pasta"
+
+[[generated]]
+id = "tsiBJkwoUJqGWy1h9Em49"
+uri = "file://artifacts/all-blue/src/assets/food-west-2.png"
+type = "image"
+title = "West Blue scallops"
+
+[[generated]]
+id = "dYhVdu65ZwN9yIYtRFMIA"
+uri = "file://artifacts/all-blue/src/assets/chef-1.png"
+type = "image"
+title = "Head chef portrait"
+
+[[generated]]
+id = "CmQ-QPERSANMoQhZwcfkl"
+uri = "file://artifacts/all-blue/src/assets/chef-2.png"
+type = "image"
+title = "Sous chef portrait"
