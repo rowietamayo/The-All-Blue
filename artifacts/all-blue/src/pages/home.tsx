@@ -62,16 +62,16 @@ export default function Home() {
       {stats && (
         <section className="py-16 bg-card border-y border-border">
           <div className="container mx-auto px-4">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center divide-x divide-border">
-              <div className="animate-in fade-in zoom-in duration-500 delay-100">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-y-8 md:gap-y-0 text-center">
+              <div className="animate-in fade-in zoom-in duration-500 delay-100 border-r border-border/50">
                 <p className="text-4xl font-serif text-accent mb-2" data-testid="stat-menu-items">{stats.totalMenuItems}</p>
                 <p className="text-sm text-muted-foreground uppercase tracking-wider">Legendary Dishes</p>
               </div>
-              <div className="animate-in fade-in zoom-in duration-500 delay-200">
+              <div className="animate-in fade-in zoom-in duration-500 delay-200 md:border-r border-border/50">
                 <p className="text-4xl font-serif text-accent mb-2" data-testid="stat-chefs">{stats.totalChefs}</p>
                 <p className="text-sm text-muted-foreground uppercase tracking-wider">Master Chefs</p>
               </div>
-              <div className="animate-in fade-in zoom-in duration-500 delay-300">
+              <div className="animate-in fade-in zoom-in duration-500 delay-300 border-r border-border/50">
                 <p className="text-4xl font-serif text-accent mb-2" data-testid="stat-rating">{(Number(stats.averageRating) || 0).toFixed(1)}</p>
                 <p className="text-sm text-muted-foreground uppercase tracking-wider">Star Rating</p>
               </div>

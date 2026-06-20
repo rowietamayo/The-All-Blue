@@ -81,7 +81,7 @@ export default function Login() {
                 </button>
 
                 {showDropdown && (
-                  <div className="absolute z-50 top-12 left-0 w-72 bg-card border border-border rounded-xl shadow-2xl overflow-hidden">
+                  <div className="absolute z-50 top-12 left-0 w-72 max-w-[calc(100vw-3.5rem)] bg-card border border-border rounded-xl shadow-2xl overflow-hidden">
                     <div className="p-2 border-b border-border">
                       <Input
                         type="text"

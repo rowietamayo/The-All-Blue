@@ -1,12 +1,14 @@
 import { useAuth } from "@/context/auth";
 import { useCart } from "@/context/cart";
 import { useAdminListOrders, useListOrders } from "@workspace/api-client-react";
-import { LogOut, Shield, ShoppingBag, User } from "lucide-react";
+import { LogOut, Menu as MenuIcon, Shield, ShoppingBag, User, X } from "lucide-react";
+import { useState } from "react";
 import { Link } from "wouter";
 
 export function Nav() {
   const { count, openCart } = useCart();
   const { currentUser, logout, isAdmin } = useAuth();
+  const [isOpenMobile, setIsOpenMobile] = useState(false);
 
   const requestOpts = currentUser ? { headers: { "x-user-id": String(currentUser.id) } } : undefined;
   const { data: adminOrders } = useAdminListOrders(
@@ -29,7 +31,7 @@ export function Nav() {
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
-        <Link href="/" className="flex items-center gap-2" data-testid="link-home">
+        <Link href="/" className="flex items-center gap-2" data-testid="link-home" onClick={() => setIsOpenMobile(false)}>
           <img src="https://ik.imagekit.io/8mmiwepdm/all-blue/fish-svgrepo-com.svg" alt="All Blue Logo" className="h-6 w-6 text-accent" />
           <span className="font-serif text-xl font-bold tracking-tight text-primary">All Blue</span>
         </Link>
@@ -45,7 +47,6 @@ export function Nav() {
           {hasOrders && !isAdmin && (
             <Link href="/track" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-track">Track Order</Link>
           )}
-
         </div>
 
         <div className="flex items-center gap-3">
@@ -95,15 +96,6 @@ export function Nav() {
                   </span>
                 </div>
               )}
-              {/* {isAdmin && (
-                <Link
-                  href="/admin?tab=menu&new=1"
-                  className="p-2 rounded-full hover:bg-muted transition-colors text-accent hover:text-accent/80"
-                  title="Add new menu item"
-                >
-                  <PlusCircle className="w-5 h-5" />
-                </Link>
-              )} */}
               <button
                 onClick={logout}
                 className="p-2 rounded-full hover:bg-muted transition-colors text-muted-foreground hover:text-destructive"
@@ -118,8 +110,58 @@ export function Nav() {
               Sign In
             </Link>
           )}
+
+          {!isAdmin && (
+            <button
+              onClick={() => setIsOpenMobile(v => !v)}
+              className="p-2 rounded-full hover:bg-muted transition-colors text-muted-foreground hover:text-foreground md:hidden"
+              aria-label="Toggle menu"
+              data-testid="btn-toggle-mobile-menu"
+            >
+              {isOpenMobile ? <X className="w-5 h-5" /> : <MenuIcon className="w-5 h-5" />}
+            </button>
+          )}
         </div>
       </div>
+
+      {isOpenMobile && !isAdmin && (
+        <div className="md:hidden border-t border-border/40 bg-background/98 px-6 py-4 space-y-3 animate-in slide-in-from-top duration-200">
+          <Link
+            href="/menu"
+            onClick={() => setIsOpenMobile(false)}
+            className="block text-sm font-medium py-2 text-muted-foreground hover:text-foreground transition-colors"
+            data-testid="link-mobile-menu"
+          >
+            Menu
+          </Link>
+          <Link
+            href="/chefs"
+            onClick={() => setIsOpenMobile(false)}
+            className="block text-sm font-medium py-2 text-muted-foreground hover:text-foreground transition-colors"
+            data-testid="link-mobile-chefs"
+          >
+            Chefs
+          </Link>
+          <Link
+            href="/reviews"
+            onClick={() => setIsOpenMobile(false)}
+            className="block text-sm font-medium py-2 text-muted-foreground hover:text-foreground transition-colors"
+            data-testid="link-mobile-reviews"
+          >
+            Reviews
+          </Link>
+          {hasOrders && (
+            <Link
+              href="/track"
+              onClick={() => setIsOpenMobile(false)}
+              className="block text-sm font-medium py-2 text-muted-foreground hover:text-foreground transition-colors"
+              data-testid="link-mobile-track"
+            >
+              Track Order
+            </Link>
+          )}
+        </div>
+      )}
     </nav>
   );
 }
