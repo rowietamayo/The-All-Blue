@@ -1,11 +1,11 @@
 import { Router, type IRouter } from "express";
 import { db, chefsTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { eq, asc } from "drizzle-orm";
 
 const router: IRouter = Router();
 
 router.get("/chefs", async (_req, res): Promise<void> => {
-  const chefs = await db.select().from(chefsTable);
+  const chefs = await db.select().from(chefsTable).orderBy(asc(chefsTable.id));
   res.json(chefs);
 });
 
