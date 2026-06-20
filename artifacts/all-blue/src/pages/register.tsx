@@ -1,12 +1,12 @@
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useRegisterPhone } from "@workspace/api-client-react";
-import { useToast } from "@/hooks/use-toast";
-import { useLocation, Link } from "wouter";
 import { useAuth } from "@/context/auth";
-import { COUNTRY_CODES, getPhonePlaceholder } from "@/lib/country-codes";
 import { useLoading } from "@/context/loading";
+import { useToast } from "@/hooks/use-toast";
+import { COUNTRY_CODES, getPhonePlaceholder } from "@/lib/country-codes";
+import { useRegisterPhone } from "@workspace/api-client-react";
+import { useState } from "react";
+import { Link, useLocation } from "wouter";
 
 export default function Register() {
   const [name, setName] = useState("");
@@ -79,12 +79,12 @@ export default function Register() {
           </div>
           <div>
             <label className="text-sm font-medium text-foreground mb-2 block">Phone Number</label>
-            <div className="flex gap-2">
+            <div className="flex gap-2 items-center">
               <div className="relative">
                 <button
                   type="button"
                   onClick={() => setShowDropdown(v => !v)}
-                  className="flex items-center gap-1.5 px-3 h-10 border border-border rounded-md bg-background text-sm font-medium hover:bg-muted transition-colors whitespace-nowrap"
+                  className="flex items-center gap-1.5 px-3 h-9 border border-border rounded-md bg-background text-sm font-medium hover:bg-muted transition-colors whitespace-nowrap"
                   data-testid="btn-country-code"
                 >
                   <span>{selected.flag}</span>
