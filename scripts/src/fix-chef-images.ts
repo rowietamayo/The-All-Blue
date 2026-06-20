@@ -1,10 +1,10 @@
-import { db, chefsTable } from "@workspace/db";
+import { chefsTable, db } from "@workspace/db";
 import { eq } from "drizzle-orm";
 
 async function main() {
   console.log("Fixing broken chef image URLs...");
 
-  // Charlotte Chiffon - replace broken ImageKit URL with a working Unsplash pastry chef image
+  // Charlotte Chiffon - replace broken  URL with a working Unsplash pastry chef image
   const chiffonResult = await db
     .update(chefsTable)
     .set({
