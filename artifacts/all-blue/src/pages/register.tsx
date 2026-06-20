@@ -5,7 +5,7 @@ import { useRegisterPhone } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation, Link } from "wouter";
 import { useAuth } from "@/context/auth";
-import { COUNTRY_CODES } from "@/lib/country-codes";
+import { COUNTRY_CODES, getPhonePlaceholder } from "@/lib/country-codes";
 import { useLoading } from "@/context/loading";
 
 export default function Register() {
@@ -129,7 +129,7 @@ export default function Register() {
 
               <Input
                 type="tel"
-                placeholder="912 345 6789"
+                placeholder={getPhonePlaceholder(countryCode)}
                 value={phone}
                 onChange={e => setPhone(e.target.value)}
                 className="bg-background focus-visible:ring-accent flex-1"

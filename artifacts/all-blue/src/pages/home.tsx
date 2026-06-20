@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/context/auth";
+import { useCurrency } from "@/hooks/use-currency";
 import { MenuItemOrigin, useGetDashboardStats, useGetPopularItems, useListOrders } from "@workspace/api-client-react";
 import { Link } from "wouter";
 
@@ -9,6 +10,7 @@ export default function Home() {
   const { data: stats } = useGetDashboardStats();
   const { data: popularItems, isLoading: loadingPopular } = useGetPopularItems();
   const { currentUser, isAdmin } = useAuth();
+  const { formatPrice } = useCurrency();
 
   const requestOpts = currentUser ? { headers: { "x-user-id": String(currentUser.id) } } : undefined;
   const { data: userOrders } = useListOrders(
@@ -132,7 +134,7 @@ export default function Home() {
                   <CardContent className="p-6">
                     <div className="flex justify-between items-start mb-2">
                       <h3 className="font-serif text-2xl font-bold text-primary">{item.name}</h3>
-                      <span className="font-medium text-accent text-lg">${item.price.toFixed(2)}</span>
+                      <span className="font-medium text-accent text-lg">{formatPrice(item.price)}</span>
                     </div>
                     <p className="text-muted-foreground text-sm line-clamp-2">{item.description}</p>
                   </CardContent>

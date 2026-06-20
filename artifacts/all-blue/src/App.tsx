@@ -9,6 +9,7 @@ import { AuthProvider } from "@/context/auth";
 import { CartDrawer } from "@/components/cart-drawer";
 import { LoadingProvider } from "@/context/loading";
 import { ChefHatLoader } from "@/components/chef-hat-loader";
+import { CurrencyProvider } from "@/context/currency";
 
 import Home from "@/pages/home";
 import Menu from "@/pages/menu";
@@ -45,12 +46,14 @@ function App() {
       <TooltipProvider>
         <LoadingProvider>
           <AuthProvider>
-            <CartProvider>
-              <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-                <Router />
-                <CartDrawer />
-              </WouterRouter>
-            </CartProvider>
+            <CurrencyProvider>
+              <CartProvider>
+                <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+                  <Router />
+                  <CartDrawer />
+                </WouterRouter>
+              </CartProvider>
+            </CurrencyProvider>
           </AuthProvider>
           <ChefHatLoader />
         </LoadingProvider>

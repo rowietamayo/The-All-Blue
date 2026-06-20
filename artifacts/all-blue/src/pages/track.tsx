@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { useAuth } from "@/context/auth";
 import { useToast } from "@/hooks/use-toast";
+import { useCurrency } from "@/hooks/use-currency";
 
 // Lottie animation JSONs (bundled locally for reliability)
 import cancelledAnim from "../lottie/cancelled.json";
@@ -228,6 +229,7 @@ function ReviewForm({ orderId, userId, userName, onDone }: ReviewFormProps) {
 
 export default function Track() {
   const { currentUser } = useAuth();
+  const { formatPrice } = useCurrency();
   const [showAll, setShowAll] = useState(false);
   // Track which orders have been reviewed in this session
   const [reviewedOrderIds, setReviewedOrderIds] = useState<Set<number>>(new Set());
@@ -428,13 +430,13 @@ export default function Track() {
                           {latestOrder.items?.map((item, idx) => (
                             <li key={idx} className="flex justify-between text-sm">
                               <span><span className="text-muted-foreground">{item.quantity}x</span> {item.name || `Item #${item.menuItemId}`}</span>
-                              <span className="font-medium">${(item.price * item.quantity).toFixed(2)}</span>
+                              <span className="font-medium">{formatPrice(item.price * item.quantity)}</span>
                             </li>
                           ))}
                         </ul>
                         <div className="border-t border-border mt-3 pt-3 flex justify-between font-bold text-primary">
                           <span>Total</span>
-                          <span>${latestOrder.total.toFixed(2)}</span>
+                          <span>{formatPrice(latestOrder.total)}</span>
                         </div>
                       </div>
                     </div>
@@ -523,13 +525,13 @@ export default function Track() {
                                 {order.items?.map((item, idx) => (
                                   <li key={idx} className="flex justify-between text-xs text-muted-foreground">
                                     <span>{item.quantity}x {item.name || `Item #${item.menuItemId}`}</span>
-                                    <span>${(item.price * item.quantity).toFixed(2)}</span>
+                                    <span>{formatPrice(item.price * item.quantity)}</span>
                                   </li>
                                 ))}
                               </ul>
                               <div className="border-t border-border/30 mt-2 pt-2 flex justify-between font-bold text-xs text-primary">
                                 <span>Total Paid</span>
-                                <span>${order.total.toFixed(2)}</span>
+                                <span>{formatPrice(order.total)}</span>
                               </div>
                             </div>
 

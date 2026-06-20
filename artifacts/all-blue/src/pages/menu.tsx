@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Search, Plus, Check, ShieldAlert, Star } from "lucide-react";
 import { useCart } from "@/context/cart";
 import { useAuth } from "@/context/auth";
+import { useCurrency } from "@/hooks/use-currency";
 import { useDebounce } from "@/hooks/use-debounce";
 import {
   Select,
@@ -24,6 +25,7 @@ export default function Menu() {
   const [addedIds, setAddedIds] = useState<Set<number>>(new Set());
   const { addItem } = useCart();
   const { isAdmin } = useAuth();
+  const { formatPrice } = useCurrency();
 
   const debouncedSearch = useDebounce(search, 250);
 
@@ -225,7 +227,7 @@ export default function Menu() {
                 <CardContent className="p-6 flex flex-col flex-1">
                   <div className="flex justify-between items-start mb-2 gap-4">
                     <h3 className="font-serif text-2xl font-bold text-primary leading-tight">{item.name}</h3>
-                    <span className="font-medium text-accent text-lg">${item.price.toFixed(2)}</span>
+                    <span className="font-medium text-accent text-lg">{formatPrice(item.price)}</span>
                   </div>
 
                   {/* Rating display */}

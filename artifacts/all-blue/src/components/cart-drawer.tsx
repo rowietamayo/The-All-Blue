@@ -8,6 +8,7 @@ import { useLocation } from "wouter";
 import { DeliveryMap, type DeliveryAddress } from "@/components/delivery-map";
 import { useAuth } from "@/context/auth";
 import { useLoading } from "@/context/loading";
+import { useCurrency } from "@/hooks/use-currency";
 
 type Step = "cart" | "delivery";
 
@@ -24,6 +25,7 @@ const emptyAddress: DeliveryAddress = {
 export function CartDrawer() {
   const { items, removeItem, updateQuantity, clearCart, total, isOpen, closeCart } = useCart();
   const { currentUser } = useAuth();
+  const { formatPrice } = useCurrency();
   const [step, setStep] = useState<Step>("cart");
   const [address, setAddress] = useState<DeliveryAddress>(emptyAddress);
 
@@ -162,7 +164,7 @@ export function CartDrawer() {
                             <Plus className="w-3 h-3" />
                           </button>
                         </div>
-                        <span className="text-sm font-semibold text-accent">${(item.price * item.quantity).toFixed(2)}</span>
+                        <span className="text-sm font-semibold text-accent">{formatPrice(item.price * item.quantity)}</span>
                       </div>
                     </div>
                     <button
@@ -181,7 +183,7 @@ export function CartDrawer() {
               <div className="px-6 py-5 border-t border-border space-y-4">
                 <div className="flex justify-between text-lg font-semibold">
                   <span className="text-foreground">Total</span>
-                  <span className="text-accent font-serif text-xl" data-testid="cart-total">${total.toFixed(2)}</span>
+                  <span className="text-accent font-serif text-xl" data-testid="cart-total">{formatPrice(total)}</span>
                 </div>
                 <Button
                   className="w-full bg-accent hover:bg-accent/90 text-accent-foreground py-6 text-base font-medium shadow-md"
@@ -213,12 +215,12 @@ export function CartDrawer() {
                 {items.map(item => (
                   <div key={item.menuItemId} className="flex justify-between text-sm">
                     <span className="text-foreground">{item.name} <span className="text-muted-foreground">x{item.quantity}</span></span>
-                    <span className="text-accent font-medium">${(item.price * item.quantity).toFixed(2)}</span>
+                    <span className="text-accent font-medium">{formatPrice(item.price * item.quantity)}</span>
                   </div>
                 ))}
                 <div className="pt-2 mt-2 border-t border-border flex justify-between font-semibold">
                   <span>Total</span>
-                  <span className="text-accent">${total.toFixed(2)}</span>
+                  <span className="text-accent">{formatPrice(total)}</span>
                 </div>
               </div>
 
@@ -236,7 +238,7 @@ export function CartDrawer() {
                 disabled={createOrder.isPending || !isAddressComplete}
                 data-testid="btn-place-order"
               >
-                {createOrder.isPending ? "Setting Sail..." : `Place Order — $${total.toFixed(2)}`}
+                {createOrder.isPending ? "Setting Sail..." : `Place Order — ${formatPrice(total)}`}
               </Button>
               <Button
                 variant="ghost"
