@@ -614,26 +614,78 @@ export default function Admin() {
             <CardContent>
               {loadingOrders ? (
                 <div className="space-y-3">{[1, 2, 3].map((i) => (
-                  <div key={i} className="h-24 bg-muted animate-pulse rounded-lg" />
+                  <div key={i} className="h-14 bg-muted animate-pulse rounded-lg" />
                 ))}</div>
               ) : !orders?.length ? (
                 <p className="text-muted-foreground text-center py-8">No orders yet.</p>
               ) : (
-                <div className="space-y-3">
-                  {[...orders].reverse().map((order) => {
-                    const isEditing = orderEditState?.id === order.id;
-                    const isDeleting = deletingOrderId === order.id;
-                    return (
-                      <div key={order.id} className="border border-border/50 rounded-xl p-4 hover:bg-muted/20 transition-colors">
-                        {/* Order info */}
-                        <div className="flex items-start justify-between gap-4">
-                          {/* Left side */}
-                          <div className="flex-1 min-w-0">
-                            {/* Basic info */}
-                            <div className="flex items-center gap-2 mb-2 flex-wrap">
-                              <span className="font-mono bg-primary/10 text-primary text-xs font-semibold px-2 py-0.5 rounded">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-border text-muted-foreground text-left">
+                        <th className="pb-3 pr-4 font-medium">ID</th>
+                        <th className="pb-3 pr-4 font-medium">Reference No.</th>
+                        <th className="pb-3 pr-4 font-medium">Ordered By</th>
+                        <th className="pb-3 pr-4 font-medium">Orders</th>
+                        <th className="pb-3 pr-4 font-medium">Total Amount</th>
+                        <th className="pb-3 pr-4 font-medium">Date &amp; Time</th>
+                        <th className="pb-3 pr-4 font-medium">Status</th>
+                        <th className="pb-3 font-medium text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/50">
+                      {[...orders].reverse().map((order) => {
+                        const isEditing = orderEditState?.id === order.id;
+                        const isDeleting = deletingOrderId === order.id;
+                        return (
+                          <tr key={order.id} className="group hover:bg-muted/30 transition-colors align-top">
+                            {/* ID */}
+                            <td className="py-3 pr-4 text-muted-foreground font-mono">{order.id}</td>
+
+                            {/* Reference Number */}
+                            <td className="py-3 pr-4">
+                              <span className="font-mono bg-primary/10 text-primary text-xs font-semibold px-2 py-0.5 rounded whitespace-nowrap">
                                 {order.reference ?? `#${order.id}`}
                               </span>
+                            </td>
+
+                            {/* Ordered By */}
+                            <td className="py-3 pr-4">
+                              {order.customerName
+                                ? <span className="font-medium">{order.customerName}</span>
+                                : order.userId
+                                ? <span className="text-muted-foreground font-mono">User #{order.userId}</span>
+                                : <span className="text-muted-foreground italic">Guest</span>
+                              }
+                            </td>
+
+                            {/* Orders (item list) */}
+                            <td className="py-3 pr-4 max-w-[200px]">
+                              {Array.isArray(order.items) && order.items.length > 0 ? (
+                                <div className="flex flex-wrap gap-1">
+                                  {(order.items as Array<{ name?: string; quantity?: number }>).map((item, i) => (
+                                    <span key={i} className="text-xs bg-secondary/30 text-secondary-foreground px-2 py-0.5 rounded-full whitespace-nowrap">
+                                      {item.quantity}× {item.name ?? "Item"}
+                                    </span>
+                                  ))}
+                                </div>
+                              ) : (
+                                <span className="text-muted-foreground italic">—</span>
+                              )}
+                            </td>
+
+                            {/* Total Amount */}
+                            <td className="py-3 pr-4">
+                              <span className="font-semibold text-accent whitespace-nowrap">${order.total.toFixed(2)}</span>
+                            </td>
+
+                            {/* Date & Time */}
+                            <td className="py-3 pr-4 text-muted-foreground whitespace-nowrap">
+                              {new Date(order.createdAt).toLocaleString()}
+                            </td>
+
+                            {/* Status */}
+                            <td className="py-3 pr-4">
                               {isEditing ? (
                                 <div className="relative">
                                   <select
@@ -642,9 +694,7 @@ export default function Admin() {
                                     className="h-7 text-xs border border-border rounded-full px-3 pr-7 bg-background appearance-none font-medium"
                                   >
                                     {ORDER_STATUSES.map((s) => (
-                                      <option key={s.value} value={s.value}>
-                                        {s.label}
-                                      </option>
+                                      <option key={s.value} value={s.value}>{s.label}</option>
                                     ))}
                                   </select>
                                   <ChevronDown className="w-3 h-3 absolute right-2 top-2 pointer-events-none text-muted-foreground" />
@@ -654,127 +704,90 @@ export default function Admin() {
                                   {statusLabel(order.status)}
                                 </Badge>
                               )}
-                              <span className="text-xs text-muted-foreground">{new Date(order.createdAt).toLocaleString()}</span>
-                              {order.customerName
-                                ? <span className="text-xs font-medium text-foreground bg-secondary/40 px-2 py-0.5 rounded-full">👤 {order.customerName}</span>
-                                : order.userId && <span className="text-xs text-muted-foreground">User #{order.userId}</span>
-                              }
-                            </div>
+                            </td>
 
-                            {/* Delivery address */}
-                            <div className="text-sm text-muted-foreground mb-1 truncate">📍 {order.deliveryAddress}</div>
-
-                            {/* Price and items */}
-                            <div className="flex items-center gap-4 text-sm">
-                              <span className="font-semibold text-accent">${order.total.toFixed(2)}</span>
-                              <span className="text-muted-foreground">
-                                {Array.isArray(order.items) ? order.items.length : 0} item{Array.isArray(order.items) && order.items.length !== 1 ? "s" : ""}
-                              </span>
-                            </div>
-
-                            {/* Items list */}
-                            {Array.isArray(order.items) && order.items.length > 0 && (
-                              <div className="mt-2 flex flex-wrap gap-1">
-                                {(order.items as Array<{ name?: string; quantity?: number; price?: number }>).map((item, i) => (
-                                  <span key={i} className="text-xs bg-secondary/30 text-secondary-foreground px-2 py-0.5 rounded-full">
-                                    {item.quantity}× {item.name ?? "Item"}
-                                  </span>
-                                ))}
-                              </div>
-                            )}
-
-                            {/* Admin note */}
-                            {isEditing ? (
-                              <div className="mt-3">
-                                <label className="text-xs font-medium text-muted-foreground block mb-1">
-                                  Note / Alternative suggestion for customer
-                                </label>
-                                <Input
-                                  value={orderEditState?.adminNote}
-                                  onChange={(e) => setOrderEditState((s) => (s ? { ...s, adminNote: e.target.value } : s))}
-                                  placeholder="e.g. 'Sea King Stew is unavailable, we suggest Tropical Coral Fish instead'"
-                                  className="text-sm h-9"
-                                />
-                              </div>
-                            ) : order.adminNote ? (
-                              <div className="mt-2 text-xs bg-accent/10 border border-accent/20 text-accent px-3 py-1.5 rounded-lg">
-                                💬 {order.adminNote}
-                              </div>
-                            ) : null}
-                          </div>
-
-                          {/* Right side actions */}
-                          <div className="flex items-center gap-1 flex-shrink-0">
-                            {isDeleting ? (
-                              <>
-                                <span className="text-xs text-muted-foreground">Delete?</span>
-                                <Button
-                                  size="sm"
-                                  variant="destructive"
-                                  className="h-7 px-2"
-                                  onClick={() => deleteOrder.mutate({ id: order.id })}
-                                  disabled={deleteOrder.isPending}
-                                >
-                                  <Check className="w-3 h-3" />
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="h-7 px-2"
-                                  onClick={() => setDeletingOrderId(null)}
-                                >
-                                  <X className="w-3 h-3" />
-                                </Button>
-                              </>
-                            ) : isEditing ? (
-                              <>
-                                <Button
-                                  size="sm"
-                                  className="h-7 px-3 bg-accent hover:bg-accent/90 text-accent-foreground text-xs"
-                                  onClick={() =>
-                                    updateOrder.mutate({
-                                      id: order.id,
-                                      data: {
-                                        status: orderEditState?.status as AdminOrderUpdateStatus,
-                                        adminNote: orderEditState?.adminNote || null,
-                                      },
-                                    })
-                                  }
-                                  disabled={updateOrder.isPending}
-                                >
-                                  Save
-                                </Button>
-                                <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => setOrderEditState(null)}>
-                                  <X className="w-3 h-3" />
-                                </Button>
-                              </>
-                            ) : (
-                              <>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="h-7 px-2 text-xs gap-1"
-                                  onClick={() =>
-                                    setOrderEditState({ id: order.id, status: order.status, adminNote: order.adminNote ?? "" })
-                                  }
-                                >
-                                  <Pencil className="w-3 h-3" /> Edit
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="h-7 px-2 hover:text-destructive"
-                                  onClick={() => setDeletingOrderId(order.id)}
-                                >
-                                  <Trash2 className="w-3 h-3" />
-                                </Button>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
+                            {/* Actions */}
+                            <td className="py-3 text-right">
+                              {isEditing ? (
+                                <div className="space-y-2">
+                                  <div className="flex items-center justify-end gap-1">
+                                    <Button
+                                      size="sm"
+                                      className="h-7 px-3 bg-accent hover:bg-accent/90 text-accent-foreground text-xs"
+                                      onClick={() =>
+                                        updateOrder.mutate({
+                                          id: order.id,
+                                          data: {
+                                            status: orderEditState?.status as AdminOrderUpdateStatus,
+                                            adminNote: orderEditState?.adminNote || null,
+                                          },
+                                        })
+                                      }
+                                      disabled={updateOrder.isPending}
+                                    >
+                                      Save
+                                    </Button>
+                                    <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => setOrderEditState(null)}>
+                                      <X className="w-3 h-3" />
+                                    </Button>
+                                  </div>
+                                  <Input
+                                    value={orderEditState?.adminNote}
+                                    onChange={(e) => setOrderEditState((s) => (s ? { ...s, adminNote: e.target.value } : s))}
+                                    placeholder="Note for customer…"
+                                    className="text-xs h-7 w-48 ml-auto"
+                                  />
+                                </div>
+                              ) : isDeleting ? (
+                                <div className="flex items-center justify-end gap-1">
+                                  <span className="text-xs text-muted-foreground">Delete?</span>
+                                  <Button
+                                    size="sm"
+                                    variant="destructive"
+                                    className="h-7 px-2"
+                                    onClick={() => deleteOrder.mutate({ id: order.id })}
+                                    disabled={deleteOrder.isPending}
+                                  >
+                                    <Check className="w-3 h-3" />
+                                  </Button>
+                                  <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => setDeletingOrderId(null)}>
+                                    <X className="w-3 h-3" />
+                                  </Button>
+                                </div>
+                              ) : (
+                                <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-7 px-2 hover:text-foreground"
+                                    title="Edit status"
+                                    onClick={() => setOrderEditState({ id: order.id, status: order.status, adminNote: order.adminNote ?? "" })}
+                                  >
+                                    <Pencil className="w-3 h-3" />
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-7 px-2 hover:text-destructive"
+                                    title="Delete order"
+                                    onClick={() => setDeletingOrderId(order.id)}
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </Button>
+                                </div>
+                              )}
+                              {/* Admin note display */}
+                              {!isEditing && order.adminNote && (
+                                <div className="mt-1 text-xs bg-accent/10 border border-accent/20 text-accent px-2 py-1 rounded text-right">
+                                  💬 {order.adminNote}
+                                </div>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
               )}
             </CardContent>
