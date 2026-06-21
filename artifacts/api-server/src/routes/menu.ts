@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { db, menuItemsTable, reviewsTable } from "@workspace/db";
-import { eq, like, avg, count, and } from "drizzle-orm";
+import { eq, like, ilike, avg, count, and } from "drizzle-orm";
 import { sql } from "drizzle-orm";
 
 const router: IRouter = Router();
@@ -36,7 +36,7 @@ router.get("/menu", async (req, res): Promise<void> => {
 
   if (origin) conditions.push(eq(menuItemsTable.origin, origin));
   if (category) conditions.push(eq(menuItemsTable.category, category));
-  if (search) conditions.push(like(menuItemsTable.name, `%${search}%`));
+  if (search) conditions.push(ilike(menuItemsTable.name, `%${search}%`));
 
   const items = conditions.length > 0
     ? await db.select().from(menuItemsTable).where(and(...conditions))
