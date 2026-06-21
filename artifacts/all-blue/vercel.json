@@ -1,0 +1,7 @@
+{
+  "version": 2,
+  "buildCommand": "pnpm run build",
+  "outputDirectory": "dist/public",
+  "installCommand": "npx pnpm@9 install",
+  "framework": null
+}
