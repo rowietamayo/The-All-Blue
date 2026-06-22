@@ -3,6 +3,8 @@ import cors from "cors";
 import pinoHttp from "pino-http";
 import router from "./routes";
 import { logger } from "./lib/logger";
+import cookieParser from "cookie-parser";
+import { attachUserFromCookie } from "./middlewares/auth";
 
 const app: Express = express();
 
@@ -26,8 +28,12 @@ app.use(
   }),
 );
 app.use(cors());
+app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// attach user id from httpOnly JWT cookie to requests (populates req.headers['x-user-id'])
+app.use(attachUserFromCookie);
 
 app.use("/api", router);
 

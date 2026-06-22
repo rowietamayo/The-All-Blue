@@ -1,0 +1,7 @@
+{
+  "name": "All Blue",
+  "description": "A One Piece-inspired seafood restaurant featuring chef-crafted dishes, fresh catches, and flavors inspired by the legendary All Blue.",
+  "requestFramePermissions": [
+    "location"
+  ]
+}
