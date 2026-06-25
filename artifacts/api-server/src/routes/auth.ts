@@ -26,7 +26,7 @@ router.post("/auth/register", async (req, res): Promise<void> => {
 
   if (JWT_SECRET) {
     try {
-      const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || "1d" });
+      const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: (process.env.JWT_EXPIRES_IN || "1d") as any });
       const secure = process.env.NODE_ENV === "production";
       const sameSite: "none" | "lax" = secure ? "none" : "lax";
       res.cookie(COOKIE_NAME, token, { httpOnly: true, secure, sameSite, maxAge: COOKIE_MAX_AGE });
@@ -53,7 +53,7 @@ router.post("/auth/login", async (req, res): Promise<void> => {
 
   if (JWT_SECRET) {
     try {
-      const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || "1d" });
+      const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: (process.env.JWT_EXPIRES_IN || "1d") as any });
       const secure = process.env.NODE_ENV === "production";
       const sameSite: "none" | "lax" = secure ? "none" : "lax";
       res.cookie(COOKIE_NAME, token, { httpOnly: true, secure, sameSite, maxAge: COOKIE_MAX_AGE });

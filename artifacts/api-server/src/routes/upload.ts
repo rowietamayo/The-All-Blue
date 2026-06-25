@@ -7,9 +7,10 @@ import { eq } from "drizzle-orm";
 
 const router: IRouter = Router();
 
-const IMAGES_DIR = path.resolve("../all-blue/public/images");
+const isVercel = process.env.VERCEL === "1" || !!process.env.AWS_LAMBDA_FUNCTION_VERSION;
+const IMAGES_DIR = isVercel ? "/tmp" : path.resolve("../all-blue/public/images");
 
-if (!fs.existsSync(IMAGES_DIR)) {
+if (IMAGES_DIR !== "/tmp" && !fs.existsSync(IMAGES_DIR)) {
   fs.mkdirSync(IMAGES_DIR, { recursive: true });
 }
 
@@ -51,6 +52,11 @@ router.post("/upload/menu-image", upload.single("image"), async (req, res): Prom
 
   if (!req.file) {
     res.status(400).json({ error: "No image file provided" });
+    return;
+  }
+
+  if (isVercel && !process.env.IMAGEKIT_PRIVATE_KEY) {
+    res.status(400).json({ error: "ImageKit integration is required for image uploads in production (Vercel)." });
     return;
   }
 
@@ -113,6 +119,11 @@ router.post("/upload/chef-image", upload.single("image"), async (req, res): Prom
 
   if (!req.file) {
     res.status(400).json({ error: "No image file provided" });
+    return;
+  }
+
+  if (isVercel && !process.env.IMAGEKIT_PRIVATE_KEY) {
+    res.status(400).json({ error: "ImageKit integration is required for image uploads in production (Vercel)." });
     return;
   }
 
