@@ -152,6 +152,9 @@ export default function Admin() {
   const [deletingChefId, setDeletingChefId] = useState<number | null>(null);
   const [isDeletingChef, setIsDeletingChef] = useState(false);
   const [newChef, setNewChef] = useState<Omit<ChefEditState, "id">>(BLANK_CHEF_EDIT);
+  // Tracks locally-cancelled item indices per order so accumulation works
+  // before server refetch completes (avoids race condition on rapid ✕ clicks)
+  const [localCancelledItems, setLocalCancelledItems] = useState<Record<number, Set<number>>>({});
 
   // List hooks
   const requestOpts = currentUser
@@ -660,15 +663,58 @@ export default function Admin() {
                             </td>
 
                             {/* Orders (item list) */}
-                            <td className="py-3 pr-4 max-w-[200px]">
+                            <td className="py-3 pr-4 max-w-[240px]">
                               {Array.isArray(order.items) && order.items.length > 0 ? (
-                                <div className="flex flex-wrap gap-1">
-                                  {(order.items as Array<{ name?: string; quantity?: number }>).map((item, i) => (
-                                    <span key={i} className="text-xs bg-secondary/30 text-secondary-foreground px-2 py-0.5 rounded-full whitespace-nowrap">
-                                      {item.quantity}× {item.name ?? "Item"}
-                                    </span>
-                                  ))}
-                                </div>
+                                <ul className="space-y-1">
+                                  {(order.items as Array<{ name?: string; quantity?: number; menuItemId?: number; price?: number; cancelled?: boolean }>).map((item, i) => {
+                                    // Merge server-cancelled flag with locally-tracked cancellations
+                                    const isLocalCancelled = localCancelledItems[order.id]?.has(i) ?? false;
+                                    const isCancelled = item.cancelled || isLocalCancelled;
+                                    const canCancel = (order.items as unknown[]).length >= 2 && !isCancelled;
+                                    return (
+                                      <li key={i} className="flex items-center gap-1 group/item">
+                                        <span className={`text-xs flex-1 ${isCancelled ? "line-through text-red-500" : ""}`}>
+                                          {item.quantity}× {item.name ?? "Item"}
+                                        </span>
+                                        {isCancelled && (
+                                          <span className="text-[10px] text-red-400 font-semibold uppercase ml-1">✕ unavailable</span>
+                                        )}
+                                        {canCancel && (
+                                          <button
+                                            title={`Mark "${item.name}" as unavailable`}
+                                            className="opacity-0 group-hover/item:opacity-100 transition-opacity ml-1 text-muted-foreground hover:text-red-500 rounded hover:bg-red-50 p-0.5"
+                                            onClick={() => {
+                                              // Build merged cancelled set: server data + local state + this new one
+                                              const prevLocal = localCancelledItems[order.id] ?? new Set<number>();
+                                              const newLocal = new Set(prevLocal).add(i);
+                                              setLocalCancelledItems(prev => ({ ...prev, [order.id]: newLocal }));
+
+                                              const updatedItems = (order.items as Array<{ name?: string; quantity?: number; menuItemId?: number; price?: number; cancelled?: boolean }>).map((it, idx) =>
+                                                (idx === i || it.cancelled || prevLocal.has(idx))
+                                                  ? { ...it, cancelled: true }
+                                                  : it
+                                              );
+                                              const cancelledNames = updatedItems
+                                                .filter(it => it.cancelled)
+                                                .map(it => it.name ?? "item");
+                                              const namesStr = cancelledNames.join(", ");
+                                              const apologyNote = `Apologies sailor! But, ${namesStr} ${cancelledNames.length > 1 ? "are" : "is"} not available.`;
+                                              updateOrder.mutate({
+                                                id: order.id,
+                                                data: {
+                                                  items: updatedItems as any,
+                                                  adminNote: apologyNote,
+                                                },
+                                              });
+                                            }}
+                                          >
+                                            <X className="w-3 h-3" />
+                                          </button>
+                                        )}
+                                      </li>
+                                    );
+                                  })}
+                                </ul>
                               ) : (
                                 <span className="text-muted-foreground italic">—</span>
                               )}
@@ -676,7 +722,26 @@ export default function Admin() {
 
                             {/* Total Amount */}
                             <td className="py-3 pr-4">
-                              <span className="font-semibold text-accent whitespace-nowrap">${order.total.toFixed(2)}</span>
+                              {(() => {
+                                const items = order.items as Array<{ price?: number; quantity?: number; cancelled?: boolean }> | undefined;
+                                const originalTotal = items
+                                  ? items.reduce((s, it) => s + (it.price ?? 0) * (it.quantity ?? 1), 0)
+                                  : order.total;
+                                const adjustedTotal = items
+                                  ? items.filter(it => !it.cancelled).reduce((s, it) => s + (it.price ?? 0) * (it.quantity ?? 1), 0)
+                                  : order.total;
+                                const hasCancelled = items?.some(it => it.cancelled);
+                                return (
+                                  <div className="flex flex-col gap-0.5">
+                                    <span className="font-semibold text-accent whitespace-nowrap">
+                                      ${adjustedTotal.toFixed(2)}
+                                    </span>
+                                    {hasCancelled && (
+                                      <span className="text-[10px] text-muted-foreground line-through whitespace-nowrap">${originalTotal.toFixed(2)}</span>
+                                    )}
+                                  </div>
+                                );
+                              })()}
                             </td>
 
                             {/* Date & Time */}
@@ -776,8 +841,43 @@ export default function Admin() {
                                   </Button>
                                 </div>
                               )}
-                              {/* Admin note display */}
-                              {!isEditing && order.adminNote && (
+                              {/* Customer response banners */}
+                              {!isEditing && order.items && (order.items as any[]).some((it: any) => it.cancelled) && (() => {
+                                const hasCancelledItems = (order.items as any[]).some((it: any) => it.cancelled);
+                                const customerCancelled = order.status === "cancelled";
+                                const customerProceeded = typeof order.adminNote === "string" && order.adminNote.startsWith("[ACK]");
+                                const awaitingResponse = hasCancelledItems && !customerCancelled && !customerProceeded;
+
+                                if (customerCancelled) {
+                                  return (
+                                    <div className="mt-1.5 flex items-start gap-1.5 px-2 py-1.5 rounded-md bg-red-50 border border-red-200 text-[10px] text-red-800">
+                                      <span className="mt-0.5 shrink-0">✕</span>
+                                      <span><span className="font-semibold">Customer cancelled</span> the entire order due to item unavailability.</span>
+                                    </div>
+                                  );
+                                }
+                                if (customerProceeded) {
+                                  return (
+                                    <div className="mt-1.5 flex items-start gap-1.5 px-2 py-1.5 rounded-md bg-green-50 border border-green-200 text-[10px] text-green-800">
+                                      <span className="mt-0.5 shrink-0">✓</span>
+                                      <span><span className="font-semibold">Customer approved</span> — proceed with remaining items.</span>
+                                    </div>
+                                  );
+                                }
+                                if (awaitingResponse) {
+                                  return (
+                                    <div className="mt-1.5 flex items-start gap-1.5 px-2 py-1.5 rounded-md bg-amber-50 border border-amber-200 text-[10px] text-amber-800">
+                                      <span className="mt-0.5 shrink-0">⏳</span>
+                                      <span><span className="font-semibold">Awaiting customer</span> response on item availability.</span>
+                                    </div>
+                                  );
+                                }
+                                return null;
+                              })()}
+                              {/* Generic admin note — only show if it's not an internal ACK/apology message */}
+                              {!isEditing && order.adminNote &&
+                                !order.adminNote.startsWith("[ACK]") &&
+                                !order.adminNote.startsWith("Apologies sailor!") && (
                                 <div className="mt-1 text-xs bg-accent/10 border border-accent/20 text-accent px-2 py-1 rounded text-right">
                                   💬 {order.adminNote}
                                 </div>

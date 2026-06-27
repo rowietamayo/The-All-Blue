@@ -10,6 +10,9 @@ import type { OrderStatus } from './orderStatus';
 
 export interface Order {
   id: number;
+  reference: string;
+  /** @nullable */
+  customerName?: string | null;
   /** @nullable */
   userId?: number | null;
   status: OrderStatus;

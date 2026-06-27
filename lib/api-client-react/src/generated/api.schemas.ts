@@ -84,7 +84,6 @@ export interface MenuItemInput {
   isFeatured?: boolean;
 }
 
-
 export interface Chef {
   id: number;
   name: string;
@@ -118,6 +117,7 @@ export interface OrderItem {
   name?: string;
   quantity: number;
   price: number;
+  cancelled?: boolean;
 }
 
 export type OrderStatus = typeof OrderStatus[keyof typeof OrderStatus];
@@ -133,7 +133,7 @@ export const OrderStatus = {
 
 export interface Order {
   id: number;
-  reference?: string;
+  reference: string;
   /** @nullable */
   customerName?: string | null;
   /** @nullable */
@@ -176,6 +176,7 @@ export interface AdminOrderUpdate {
   status?: AdminOrderUpdateStatus;
   /** @nullable */
   adminNote?: string | null;
+  items?: OrderItem[];
 }
 
 export type AdminUserInputRole = typeof AdminUserInputRole[keyof typeof AdminUserInputRole];

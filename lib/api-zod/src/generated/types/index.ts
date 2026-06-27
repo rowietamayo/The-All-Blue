@@ -16,7 +16,6 @@ export * from './adminUserInput';
 export * from './adminUserInputRole';
 export * from './authResult';
 export * from './chef';
-export * from './chefOrigin';
 export * from './dashboardStats';
 export * from './dashboardStatsOriginBreakdown';
 export * from './healthStatus';

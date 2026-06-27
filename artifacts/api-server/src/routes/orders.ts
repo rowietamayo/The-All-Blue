@@ -76,4 +76,41 @@ router.get("/orders/:id", async (req, res): Promise<void> => {
   res.json(order);
 });
 
+router.patch("/orders/:id", async (req, res): Promise<void> => {
+  const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const id = parseInt(raw, 10);
+  if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
+
+  const userIdHeader = req.headers["x-user-id"];
+  if (!userIdHeader) { res.status(401).json({ error: "Unauthorized" }); return; }
+  const userId = parseInt(userIdHeader as string, 10);
+
+  const { decision } = req.body as { decision?: "proceed" | "cancel" };
+  if (!decision) { res.status(400).json({ error: "decision is required" }); return; }
+
+  // Verify the order belongs to this user
+  const [existing] = await db.select().from(ordersTable).where(and(
+    eq(ordersTable.id, id),
+    eq(ordersTable.userId, userId)
+  ));
+  if (!existing) { res.status(404).json({ error: "Order not found or access denied" }); return; }
+
+  if (decision === "cancel") {
+    const [updated] = await db.update(ordersTable)
+      .set({ status: "cancelled" })
+      .where(eq(ordersTable.id, id))
+      .returning();
+    res.json(updated);
+  } else {
+    // "proceed" — mark the note as acknowledged so the prompt doesn't re-appear
+    const currentNote = existing.adminNote ?? "";
+    const acknowledged = currentNote.startsWith("[ACK]") ? currentNote : `[ACK] ${currentNote}`;
+    const [updated] = await db.update(ordersTable)
+      .set({ adminNote: acknowledged })
+      .where(eq(ordersTable.id, id))
+      .returning();
+    res.json(updated);
+  }
+});
+
 export default router;

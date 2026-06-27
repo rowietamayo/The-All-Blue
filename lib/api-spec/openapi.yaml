@@ -762,6 +762,8 @@ components:
           type: integer
         price:
           type: number
+        cancelled:
+          type: boolean
 
     Order:
       type: object
@@ -822,6 +824,10 @@ components:
           enum: [pending, preparing, out_for_delivery, delivered, cancelled]
         adminNote:
           type: ["string", "null"]
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrderItem"
 
     AdminUserInput:
       type: object

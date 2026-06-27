@@ -140,7 +140,6 @@ export const ListChefsResponseItem = zod.object({
   "id": zod.number(),
   "name": zod.string(),
   "specialty": zod.string(),
-  "origin": zod.enum(['north_blue', 'south_blue', 'east_blue', 'west_blue']),
   "bio": zod.string().nullish(),
   "imageUrl": zod.string().nullish(),
   "yearsExperience": zod.number().optional()
@@ -159,7 +158,6 @@ export const GetChefResponse = zod.object({
   "id": zod.number(),
   "name": zod.string(),
   "specialty": zod.string(),
-  "origin": zod.enum(['north_blue', 'south_blue', 'east_blue', 'west_blue']),
   "bio": zod.string().nullish(),
   "imageUrl": zod.string().nullish(),
   "yearsExperience": zod.number().optional()
@@ -200,6 +198,8 @@ export const CreateReviewBody = zod.object({
  */
 export const ListOrdersResponseItem = zod.object({
   "id": zod.number(),
+  "reference": zod.string(),
+  "customerName": zod.string().nullish(),
   "userId": zod.number().nullish(),
   "status": zod.enum(['pending', 'preparing', 'out_for_delivery', 'delivered', 'cancelled']),
   "total": zod.number(),
@@ -211,7 +211,8 @@ export const ListOrdersResponseItem = zod.object({
   "menuItemId": zod.number(),
   "name": zod.string().optional(),
   "quantity": zod.number(),
-  "price": zod.number()
+  "price": zod.number(),
+  "cancelled": zod.boolean().optional()
 })).optional(),
   "adminNote": zod.string().nullish(),
   "createdAt": zod.string()
@@ -231,7 +232,8 @@ export const CreateOrderBody = zod.object({
   "menuItemId": zod.number(),
   "name": zod.string().optional(),
   "quantity": zod.number(),
-  "price": zod.number()
+  "price": zod.number(),
+  "cancelled": zod.boolean().optional()
 }))
 })
 
@@ -245,6 +247,8 @@ export const GetOrderParams = zod.object({
 
 export const GetOrderResponse = zod.object({
   "id": zod.number(),
+  "reference": zod.string(),
+  "customerName": zod.string().nullish(),
   "userId": zod.number().nullish(),
   "status": zod.enum(['pending', 'preparing', 'out_for_delivery', 'delivered', 'cancelled']),
   "total": zod.number(),
@@ -256,7 +260,8 @@ export const GetOrderResponse = zod.object({
   "menuItemId": zod.number(),
   "name": zod.string().optional(),
   "quantity": zod.number(),
-  "price": zod.number()
+  "price": zod.number(),
+  "cancelled": zod.boolean().optional()
 })).optional(),
   "adminNote": zod.string().nullish(),
   "createdAt": zod.string()
@@ -357,6 +362,8 @@ export const AdminListOrdersHeader = zod.object({
 
 export const AdminListOrdersResponseItem = zod.object({
   "id": zod.number(),
+  "reference": zod.string(),
+  "customerName": zod.string().nullish(),
   "userId": zod.number().nullish(),
   "status": zod.enum(['pending', 'preparing', 'out_for_delivery', 'delivered', 'cancelled']),
   "total": zod.number(),
@@ -368,7 +375,8 @@ export const AdminListOrdersResponseItem = zod.object({
   "menuItemId": zod.number(),
   "name": zod.string().optional(),
   "quantity": zod.number(),
-  "price": zod.number()
+  "price": zod.number(),
+  "cancelled": zod.boolean().optional()
 })).optional(),
   "adminNote": zod.string().nullish(),
   "createdAt": zod.string()
@@ -389,11 +397,20 @@ export const AdminUpdateOrderHeader = zod.object({
 
 export const AdminUpdateOrderBody = zod.object({
   "status": zod.enum(['pending', 'preparing', 'out_for_delivery', 'delivered', 'cancelled']).optional(),
-  "adminNote": zod.string().nullish()
+  "adminNote": zod.string().nullish(),
+  "items": zod.array(zod.object({
+  "menuItemId": zod.number(),
+  "name": zod.string().optional(),
+  "quantity": zod.number(),
+  "price": zod.number(),
+  "cancelled": zod.boolean().optional()
+})).optional()
 })
 
 export const AdminUpdateOrderResponse = zod.object({
   "id": zod.number(),
+  "reference": zod.string(),
+  "customerName": zod.string().nullish(),
   "userId": zod.number().nullish(),
   "status": zod.enum(['pending', 'preparing', 'out_for_delivery', 'delivered', 'cancelled']),
   "total": zod.number(),
@@ -405,7 +422,8 @@ export const AdminUpdateOrderResponse = zod.object({
   "menuItemId": zod.number(),
   "name": zod.string().optional(),
   "quantity": zod.number(),
-  "price": zod.number()
+  "price": zod.number(),
+  "cancelled": zod.boolean().optional()
 })).optional(),
   "adminNote": zod.string().nullish(),
   "createdAt": zod.string()

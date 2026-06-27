@@ -94,10 +94,21 @@ router.patch("/admin/orders/:id", async (req, res): Promise<void> => {
   const id = parseInt(raw, 10);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
 
-  const { status, adminNote } = req.body as { status?: string; adminNote?: string | null };
-  const updates: Partial<{ status: string; adminNote: string | null }> = {};
+  console.log("ADMIN UPDATE BODY:", JSON.stringify(req.body, null, 2));
+  const { status, adminNote, items } = req.body as {
+    status?: string;
+    adminNote?: string | null;
+    items?: Array<{ menuItemId: number; name?: string; quantity: number; price: number; cancelled?: boolean }>;
+  };
+  const updates: Partial<{ status: string; adminNote: string | null; items: unknown; total: number }> = {};
   if (status !== undefined) updates.status = status;
   if (adminNote !== undefined) updates.adminNote = adminNote;
+  if (items !== undefined) {
+    updates.items = items;
+    updates.total = items
+      .filter(it => !it.cancelled)
+      .reduce((sum, it) => sum + (it.price ?? 0) * (it.quantity ?? 1), 0);
+  }
 
   if (Object.keys(updates).length === 0) { res.status(400).json({ error: "No fields to update" }); return; }
 

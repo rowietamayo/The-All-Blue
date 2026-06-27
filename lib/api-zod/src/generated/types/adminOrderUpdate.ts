@@ -6,9 +6,11 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { AdminOrderUpdateStatus } from './adminOrderUpdateStatus';
+import type { OrderItem } from './orderItem';
 
 export interface AdminOrderUpdate {
   status?: AdminOrderUpdateStatus;
   /** @nullable */
   adminNote?: string | null;
+  items?: OrderItem[];
 }

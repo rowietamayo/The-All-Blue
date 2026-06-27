@@ -2,15 +2,15 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { useCreateReview, useListOrders, useListReviews, getListReviewsQueryKey } from "@workspace/api-client-react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/context/auth";
+import { useCurrency } from "@/hooks/use-currency";
+import { useToast } from "@/hooks/use-toast";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { customFetch, getListReviewsQueryKey, useCreateReview, useListOrders, useListReviews } from "@workspace/api-client-react";
 import Lottie from "lottie-react";
-import { MapPin, MessageCircle, Package, RefreshCw, Star } from "lucide-react";
+import { AlertTriangle, MapPin, MessageCircle, Package, RefreshCw, Star } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "wouter";
-import { useAuth } from "@/context/auth";
-import { useToast } from "@/hooks/use-toast";
-import { useCurrency } from "@/hooks/use-currency";
 
 // Lottie animation JSONs (bundled locally for reliability)
 import cancelledAnim from "../lottie/cancelled.json";
@@ -259,6 +259,27 @@ export default function Track() {
     { enabled: !!currentUser }
   );
 
+  // Customer decision: proceed with remaining or cancel entire order
+  const { toast } = useToast();
+  const respondToOrder = useMutation({
+    mutationFn: async ({ orderId, decision }: { orderId: number; decision: "proceed" | "cancel" }) => {
+      return customFetch<unknown>(`/api/orders/${orderId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", ...(requestOpts?.headers ?? {}) },
+        body: JSON.stringify({ decision }),
+      });
+    },
+    onSuccess: (_data, vars) => {
+      if (vars.decision === "cancel") {
+        toast({ title: "Order cancelled", description: "Your order has been cancelled." });
+      } else {
+        toast({ title: "Got it!", description: "We'll continue preparing your remaining items." });
+      }
+      refetch();
+    },
+    onError: () => toast({ title: "Something went wrong", variant: "destructive" }),
+  });
+
   const sortedOrders = orders
     ? [...orders].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     : [];
@@ -404,9 +425,8 @@ export default function Track() {
                         ))}
                       </div>
                     </div>
-
-                    {/* Admin note */}
-                    {latestOrder.adminNote && (
+                             {/* Admin note — only show generic kitchen note if NOT an apology (apology handled below) */}
+                    {latestOrder.adminNote && !latestOrder.adminNote.startsWith("[ACK]") && !latestOrder.items?.some((it: any) => it.cancelled) && (
                       <div className="flex items-start gap-3 mb-6 px-4 py-3.5 rounded-xl bg-amber-50 border border-amber-200 animate-in slide-in-from-bottom-2 duration-500">
                         <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0 mt-0.5">
                           <MessageCircle className="w-4 h-4 text-amber-600" />
@@ -415,6 +435,66 @@ export default function Track() {
                           <p className="text-xs font-semibold text-amber-700 uppercase tracking-wide mb-0.5">Message from the kitchen</p>
                           <p className="text-sm text-amber-900 leading-relaxed">{latestOrder.adminNote}</p>
                         </div>
+                      </div>
+                    )}
+
+                    {/* ⚓ Item cancellation notification — only when not acknowledged and not already cancelled */}
+                    {latestOrder.items?.some((it: any) => it.cancelled) &&
+                      !latestOrder.adminNote?.startsWith("[ACK]") &&
+                      latestOrder.status !== "cancelled" && (
+                      <div className="mb-6 rounded-xl border-2 border-red-200 bg-red-50 overflow-hidden animate-in slide-in-from-bottom-3 duration-500">
+                        {/* Header */}
+                        <div className="flex items-center gap-3 px-4 py-3 bg-red-100 border-b border-red-200">
+                          <div className="w-8 h-8 rounded-full bg-red-200 flex items-center justify-center flex-shrink-0">
+                            <AlertTriangle className="w-4 h-4 text-red-600" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-red-800">Item Availability Update</p>
+                            <p className="text-xs text-red-600">Action required from you</p>
+                          </div>
+                        </div>
+                        {/* Body */}
+                        <div className="px-4 py-3">
+                          <p className="text-sm text-red-800 leading-relaxed mb-1">
+                            <span className="font-semibold">⚓ Apologies sailor!</span>{" "}
+                            But,{" "}
+                            <span className="font-semibold">
+                              {latestOrder.items
+                                .filter((it: any) => it.cancelled)
+                                .map((it: any) => it.name ?? "item")
+                                .join(", ")}
+                            </span>{" "}
+                            {latestOrder.items.filter((it: any) => it.cancelled).length > 1 ? "are" : "is"} not available.
+                          </p>
+                          <p className="text-xs text-red-600 mb-3">Would you like to proceed with your remaining items, or cancel the entire order?</p>
+                          <div className="flex gap-2 flex-wrap">
+                            <Button
+                              size="sm"
+                              className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs"
+                              disabled={respondToOrder.isPending}
+                              onClick={() => respondToOrder.mutate({ orderId: latestOrder.id, decision: "proceed" })}
+                            >
+                              ✓ Proceed with remaining order
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="border-red-300 text-red-700 hover:bg-red-100 text-xs"
+                              disabled={respondToOrder.isPending}
+                              onClick={() => respondToOrder.mutate({ orderId: latestOrder.id, decision: "cancel" })}
+                            >
+                              ✕ Cancel entire order
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Acknowledged — show quiet confirmation */}
+                    {latestOrder.adminNote?.startsWith("[ACK]") && latestOrder.items?.some((it: any) => it.cancelled) && (
+                      <div className="flex items-center gap-2 mb-4 px-3 py-2 rounded-lg bg-green-50 border border-green-200 text-xs text-green-700">
+                        <span>✓</span>
+                        <span>You chose to proceed with your remaining items.</span>
                       </div>
                     )}
 
@@ -427,17 +507,45 @@ export default function Track() {
                       <div className="border-t border-border pt-4">
                         <h5 className="font-medium text-primary mb-3">Order Items</h5>
                         <ul className="space-y-2">
-                          {latestOrder.items?.map((item, idx) => (
-                            <li key={idx} className="flex justify-between text-sm">
-                              <span><span className="text-muted-foreground">{item.quantity}x</span> {item.name || `Item #${item.menuItemId}`}</span>
-                              <span className="font-medium">{formatPrice(item.price * item.quantity)}</span>
+                          {latestOrder.items?.map((item: any, idx: number) => (
+                            <li key={idx} className={`flex justify-between text-sm ${item.cancelled ? "opacity-60" : ""}`}>
+                              <span className={item.cancelled ? "line-through text-red-500" : ""}>
+                                <span className="text-muted-foreground">{item.quantity}x</span>{" "}
+                                {item.name || `Item #${item.menuItemId}`}
+                              </span>
+                              <span className={`font-medium ${item.cancelled ? "line-through text-red-400" : ""}`}>
+                                {formatPrice(item.price * item.quantity)}
+                              </span>
                             </li>
                           ))}
                         </ul>
-                        <div className="border-t border-border mt-3 pt-3 flex justify-between font-bold text-primary">
-                          <span>Total</span>
-                          <span>{formatPrice(latestOrder.total)}</span>
-                        </div>
+                        {/* Updated total — deduct cancelled items */}
+                        {(() => {
+                          const hasCancelled = latestOrder.items?.some((it: any) => it.cancelled);
+                          const originalTotal = latestOrder.items?.reduce((s: number, it: any) => s + it.price * it.quantity, 0) ?? latestOrder.total;
+                          const updatedTotal = latestOrder.total;
+                          return (
+                            <div className="border-t border-border mt-3 pt-3">
+                              {hasCancelled ? (
+                                <>
+                                  <div className="flex justify-between text-sm text-muted-foreground line-through mb-0.5">
+                                    <span>Original Total</span>
+                                    <span>{formatPrice(originalTotal)}</span>
+                                  </div>
+                                  <div className="flex justify-between font-bold text-primary">
+                                    <span>Updated Total</span>
+                                    <span className="text-accent">{formatPrice(updatedTotal)}</span>
+                                  </div>
+                                </>
+                              ) : (
+                                <div className="flex justify-between font-bold text-primary">
+                                  <span>Total</span>
+                                  <span>{formatPrice(latestOrder.total)}</span>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </div>
                     </div>
 
@@ -521,30 +629,92 @@ export default function Track() {
                             </div>
 
                             <div className="bg-background/40 border border-border/30 rounded-md p-3">
+                              {/* Apology banner for cancelled items in past orders */}
+                              {order.items?.some((it: any) => it.cancelled) && (
+                                <div className="mb-3 rounded-lg border border-red-200 bg-red-50 overflow-hidden">
+                                  {/* Body */}
+                                  <div className="px-3 py-2.5">
+                                    <p className="text-[11px] text-red-800 leading-relaxed mb-1.5">
+                                      <span className="font-semibold">⚓ Apologies sailor!</span>{" "}
+                                      But,{" "}
+                                      <span className="font-semibold">
+                                        {order.items
+                                          .filter((it: any) => it.cancelled)
+                                          .map((it: any) => it.name ?? "item")
+                                          .join(", ")}
+                                      </span>{" "}
+                                      {order.items.filter((it: any) => it.cancelled).length > 1 ? "are" : "is"} not available.
+                                    </p>
+                                    {!order.adminNote?.startsWith("[ACK]") && order.status !== "cancelled" ? (
+                                      <>
+                                        <p className="text-[10px] text-red-600 mb-2">Proceed with remaining items, or cancel the entire order?</p>
+                                        <div className="flex gap-1.5 flex-wrap">
+                                          <Button
+                                            size="sm"
+                                            className="bg-primary hover:bg-primary/90 text-primary-foreground text-[10px] h-7 px-2.5 py-1"
+                                            disabled={respondToOrder.isPending}
+                                            onClick={() => respondToOrder.mutate({ orderId: order.id, decision: "proceed" })}
+                                          >
+                                            ✓ Proceed
+                                          </Button>
+                                          <Button
+                                            size="sm"
+                                            variant="outline"
+                                            className="border-red-300 text-red-700 hover:bg-red-100 text-[10px] h-7 px-2.5 py-1"
+                                            disabled={respondToOrder.isPending}
+                                            onClick={() => respondToOrder.mutate({ orderId: order.id, decision: "cancel" })}
+                                          >
+                                            ✕ Cancel Order
+                                          </Button>
+                                        </div>
+                                      </>
+                                    ) : order.status === "cancelled" ? (
+                                      <p className="text-[10px] text-red-600 italic">This order has been cancelled.</p>
+                                    ) : (
+                                      <p className="text-[10px] text-green-600 flex items-center gap-1 font-medium">
+                                        <span>✓</span> You chose to proceed with remaining items.
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
                               <ul className="space-y-1">
-                                {order.items?.map((item, idx) => (
-                                  <li key={idx} className="flex justify-between text-xs text-muted-foreground">
-                                    <span>{item.quantity}x {item.name || `Item #${item.menuItemId}`}</span>
-                                    <span>{formatPrice(item.price * item.quantity)}</span>
+                                {order.items?.map((item: any, idx: number) => (
+                                  <li key={idx} className={`flex justify-between text-xs ${item.cancelled ? "opacity-60" : "text-muted-foreground"}`}>
+                                    <span className={item.cancelled ? "line-through text-red-400" : ""}>{item.quantity}x {item.name || `Item #${item.menuItemId}`}</span>
+                                    <span className={item.cancelled ? "line-through text-red-400" : ""}>{formatPrice(item.price * item.quantity)}</span>
                                   </li>
                                 ))}
                               </ul>
-                              <div className="border-t border-border/30 mt-2 pt-2 flex justify-between font-bold text-xs text-primary">
-                                <span>Total Paid</span>
-                                <span>{formatPrice(order.total)}</span>
-                              </div>
+                              {(() => {
+                                const hasCancelled = order.items?.some((it: any) => it.cancelled);
+                                const originalTotal = order.items?.reduce((s: number, it: any) => s + it.price * it.quantity, 0) ?? order.total;
+                                return (
+                                  <div className="border-t border-border/30 mt-2 pt-2 text-xs">
+                                    {hasCancelled ? (
+                                      <>
+                                        <div className="flex justify-between text-muted-foreground line-through mb-0.5">
+                                          <span>Original Total</span>
+                                          <span>{formatPrice(originalTotal)}</span>
+                                        </div>
+                                        <div className="flex justify-between font-bold text-primary">
+                                          <span>Total Paid</span>
+                                          <span className="text-accent">{formatPrice(order.total)}</span>
+                                        </div>
+                                      </>
+                                    ) : (
+                                      <div className="flex justify-between font-bold text-primary">
+                                        <span>Total Paid</span>
+                                        <span>{formatPrice(order.total)}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })()}
                             </div>
 
-                            {/* Kitchen Note / Cancellation Reason */}
-                            {order.adminNote && (
-                              <div className="flex items-start gap-2.5 p-3 rounded-lg bg-amber-50/50 border border-amber-200/40 text-xs">
-                                <MessageCircle className="w-3.5 h-3.5 text-amber-600 mt-0.5 flex-shrink-0" />
-                                <div>
-                                  <span className="font-semibold text-amber-700">Kitchen Note: </span>
-                                  <span className="text-amber-900 leading-relaxed">{order.adminNote}</span>
-                                </div>
-                              </div>
-                            )}
+
+
                           </div>
 
                           {order.status === "delivered" && !reviewedOrderIds.has(order.id) && currentUser && (

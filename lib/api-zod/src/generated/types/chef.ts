@@ -5,13 +5,11 @@
  * Sanji's All Blue Restaurant API
  * OpenAPI spec version: 0.1.0
  */
-import type { ChefOrigin } from './chefOrigin';
 
 export interface Chef {
   id: number;
   name: string;
   specialty: string;
-  origin: ChefOrigin;
   /** @nullable */
   bio?: string | null;
   /** @nullable */
