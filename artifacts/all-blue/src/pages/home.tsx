@@ -58,8 +58,7 @@ export default function Home() {
             Where the Four Seas Meet
           </h1>
           <p className="text-lg md:text-xl text-primary-foreground/80 mb-8 max-w-2xl mx-auto">
-            Experience the culinary dream of the seafarer. Dishes crafted from
-            the finest ingredients of the North, South, East, and West Blue.
+            Inspired by the legendary sea where the four oceans meet, our menu celebrates rare ingredients and unforgettable flavors from every corner of the world.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <Link href="/menu">
